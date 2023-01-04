@@ -1,20 +1,44 @@
-import React from "react";
+import React, { useContext } from "react";
 import backgroundImage from "../asset/background-login.jpeg";
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { Button, Checkbox, Form, Input } from 'antd';
 import { useNavigate, Link } from "react-router-dom"; //import module điều hướng
 import Auth from "../service/Auth"
+import UserContext from "../contexts/UserContext";
+export default function APINavigate() {
+    const navigate = useNavigate();
+    return <Login navigate={navigate} />
+}
 
 class Login extends React.Component {
+    static contextType = UserContext;
+
     constructor(props) {
         super(props);
+        this.onFinish = this.onFinish.bind(this)
     }
-    test(){
+    test() {
         Auth.test();
     }
 
-    onFinish(values) {
-        console.log('Received values of form: ', values);
+    componentDidMount() {
+        // const user = this.context
+        // console.log(user) // { name: 'Tania', loggedIn: true }
+    }
+
+    async onFinish(values) {
+        try {
+            // alert(this.props.navigate)
+            const data = await Auth.login(values);
+            const { user, setUser } = this.context;
+
+            setTimeout(
+                () => { return setUser(data.data), 2000 }
+            );
+            this.props.navigate("/chat")
+        } catch (error) {
+            alert(error.response.data)
+        }
     };
 
     render() {
@@ -46,6 +70,7 @@ class Login extends React.Component {
             <div style={background}>
                 <div style={boxLogin}>
                     <Form
+                        method="POST"
                         name="normal_login"
                         className="login-form"
                         initialValues={{
@@ -53,20 +78,20 @@ class Login extends React.Component {
                         }}
                         onFinish={this.onFinish}
                     >
-                        <h1 style={{marginInlineStart: "20%"}}>ĐĂNG NHẬP</h1>
+                        <h1 style={{ marginInlineStart: "20%" }}>ĐĂNG NHẬP</h1>
                         <Form.Item
-                            name="username"
+                            name="email"
                             rules={[
                                 {
                                     required: true,
-                                    message: 'Vui lòng nhập username!',
+                                    message: 'Vui lòng nhập email!',
                                 },
                             ]}
                         >
-                            <Input style={iteminput} prefix={<UserOutlined className="site-form-item-icon" />} placeholder="Username" />
+                            <Input style={iteminput} prefix={<UserOutlined className="site-form-item-icon" />} placeholder="Email" />
                         </Form.Item>
                         <Form.Item
-                            name="password"
+                            name="pass"
                             rules={[
                                 {
                                     required: true,
@@ -92,10 +117,10 @@ class Login extends React.Component {
                         </Form.Item>
 
                         <Form.Item>
-                            <Button style={{width: "100%", fontSize:"20px", height: "auto"}} type="primary" htmlType="submit" className="login-form-button">
+                            <Button style={{ width: "100%", fontSize: "20px", height: "auto" }} type="primary" htmlType="submit" className="login-form-button">
                                 Xác nhận
                             </Button>
-                            <span style={iteminput}>Chư có tài khoản <Link to="/register">Đăng ký!</Link></span> 
+                            <span style={iteminput}>Chư có tài khoản <Link to="/register">Đăng ký!</Link></span>
                         </Form.Item>
                     </Form>
                 </div>
@@ -104,4 +129,4 @@ class Login extends React.Component {
     }
 }
 
-export default Login
+// export default Login

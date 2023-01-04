@@ -5,17 +5,71 @@ import { Button, Checkbox, Form, Input } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import { message, Upload } from 'antd';
 import { useNavigate, Link } from "react-router-dom"; //import module điều hướng
+import Auth from "../service/Auth";
+import { v4 as uuidv4 } from "uuid";
+import { app } from "../firebase";
+import { getStorage, ref, getDownloadURL, uploadBytes } from "firebase/storage";
+// import UserContext from "../contexts/UserContext";
+
+// Create a root reference
+const storage = getStorage();
 
 class Register extends React.Component {
+    // static contextType = UserContext;
     constructor(props) {
         super(props);
     }
 
-    onFinish(values) {
-        console.log('Received values of form: ', values);
+    componentDidMount() {
+        
+    }
+
+    async onFinish(values) {
+        const uid = uuidv4();
+        const photoURL = "";
+
+        if (values.password == values.repassword) {
+            //Upload ảnh
+            const imageRef = ref(storage, uid)
+            uploadBytes(imageRef, values.avatar.file)
+                .then(() => {
+                    //Nếu upload thành công lưu lại url vào biến photoURL
+                    getDownloadURL(imageRef)
+                        .then(async (url) => {
+                            try {
+                                const user = {
+                                    uid: uid,
+                                    username: values.username,
+                                    email: values.email,
+                                    pass: values.password,
+                                    photoURL: url
+                                }
+                                console.log(user)
+
+                                const status = await Auth.createAccount(user)
+                                if (status) {
+                                    alert("Tài khoản đăng ký thành công");
+                                } else {
+                                    alert("Đã có lỗi xảy ra khi đăng ký tài khoản");
+                                }
+                            } catch (e) {
+                                console.error("Error adding document: ", e);
+                            }
+                        })
+                        .catch(error => {
+                            console.log(error.massage + "Lỗi lấy url ảnh")
+                        });
+                })
+                .catch(error => {
+                    console.log(error.massage + "Lỗi upload ảnh")
+                })
+        }else{
+            alert("Mật khẩu nhập lại không khớp")
+        }
     };
 
     render() {
+        const {user} = this.context;
         const props = {
 
             onChange(info) {
@@ -58,6 +112,7 @@ class Register extends React.Component {
             <div style={background}>
                 <div style={boxLogin}>
                     <Form
+                        method="POST"
                         name="normal_login"
                         className="login-form"
                         initialValues={{
@@ -124,7 +179,7 @@ class Register extends React.Component {
                             name="avatar"
                             rules={[
                                 {
-                                    required: true,
+                                    required: false,
                                     message: 'Vui chọn ảnh đại diện!',
                                 },
                             ]}
@@ -136,7 +191,7 @@ class Register extends React.Component {
                             </Upload>
 
                         </Form.Item>
-                        
+
                         <Form.Item>
                             <Button style={{ width: "100%", fontSize: "20px", height: "auto" }} type="primary" htmlType="submit" className="login-form-button">
                                 Xác nhận

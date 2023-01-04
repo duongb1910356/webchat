@@ -5,8 +5,21 @@ class Auth {
         this.api = ApiClient(baseUrl);
     }
 
+    createAccount(data){
+        return (this.api.post("/register", data));
+    }
+
+    login(data){
+        try {
+            return (this.api.post("/login", data))
+
+        } catch (error) {
+            console.log("er")
+        }
+    }
+
     test() {
-        return (this.api.get("/test"));
+        return (this.api.get("/test").data);
     }
 }
 
