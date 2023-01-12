@@ -5,6 +5,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Chat from "./views/Chat";
 import "./App.css";
 import { UserProvider } from "./contexts/UserContext";
+import Test from "./components/Test";
+import AddFriend from "./components/AddFriend";
 
 class App extends React.Component {
   constructor(props) {
@@ -19,7 +21,10 @@ class App extends React.Component {
             <Route path="/">
               <Route index element={<Login />} />
               <Route path='register' element={<Register />} />
-              <Route path="chat" element={<Chat />} />
+              <Route path="chat/*" element={<Chat />}>
+                <Route path='test' element={<Test />} />
+                <Route path="addfriend" element={<AddFriend />} />
+              </Route>
             </Route>
           </Routes>
         </BrowserRouter>

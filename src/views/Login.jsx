@@ -27,14 +27,13 @@ class Login extends React.Component {
     }
 
     async onFinish(values) {
+        const { user, setUser } = this.context;
         try {
-            // alert(this.props.navigate)
-            const data = await Auth.login(values);
-            const { user, setUser } = this.context;
-
+            const st = await Auth.login(values);
             setTimeout(
-                () => { return setUser(data.data), 2000 }
+                () => { return setUser(st.data), 2000 }
             );
+            // console.log(user)
             this.props.navigate("/chat")
         } catch (error) {
             alert(error.response.data)
