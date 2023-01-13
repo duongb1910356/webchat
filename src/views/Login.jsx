@@ -21,19 +21,13 @@ class Login extends React.Component {
         Auth.test();
     }
 
-    componentDidMount() {
-        // const user = this.context
-        // console.log(user) // { name: 'Tania', loggedIn: true }
-    }
-
     async onFinish(values) {
         const { user, setUser } = this.context;
         try {
             const st = await Auth.login(values);
             setTimeout(
-                () => { return setUser(st.data), 2000 }
+                () => { return setUser(st.data), 300 }
             );
-            // console.log(user)
             this.props.navigate("/chat")
         } catch (error) {
             alert(error.response.data)
