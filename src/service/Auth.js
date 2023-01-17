@@ -41,6 +41,7 @@ class Auth {
     }
 
     getListFriend(uid){
+        console.log("route>>> ",uid)
         return (this.api.get("/getListFriend",{
             params: { uid: uid }
         }))

@@ -13,6 +13,8 @@ import { useNavigate, Link } from "react-router-dom"; //import module điều h�
 
 export default function Chat() {
     const { user, setUser } = useContext(UserContext);
+    const [userCurrentChat, setUserCurrentChat] = useState({});
+
     const [show, setShow] = useState(false);
     const [usersWantMadeFriend, setUserWantMakeFriend] = useState([]);
     const [friends, setFriends] = useState([]);
@@ -21,21 +23,14 @@ export default function Chat() {
     //     setShow(true)
     // }
 
-    const getListFriend = async () => {
-        const result = await Auth.getListFriend(user.uid);
-        setTimeout(() => {
-            setFriends(result.data);
-        }, 300);
 
-        console.log(friends)
-    }
 
     useEffect(() => {
         Auth.fetchProfile()
             .then((resolve) => {
                 setTimeout(() => {
                     setUser(resolve.data);
-                }, 2000);
+                }, 3000);
 
                 const sessionID = localStorage.getItem("sessionID");
                 if (sessionID) {
@@ -51,11 +46,9 @@ export default function Chat() {
                 socket.connect()
 
             })
-            .catch(() => {
-                console.log("Lỗi fetch")
+            .catch((error) => {
+                console.log(error, "Lỗi fetch")
             })
-
-        getListFriend();
 
         socket.on("session", ({ sessionID, id }) => {
             console.log("session >>>", sessionID);
@@ -94,6 +87,29 @@ export default function Chat() {
         }
     }
 
+    // const sendMessage = (content) => {
+    //     console.log("userCurrentChat.socketID >>> ", userCurrentChat.socketID)
+    //     if (userCurrentChat.socketID) {
+    //         socket.emit("private message", {
+    //             content,
+    //             to: userCurrentChat.socketID,
+    //         });
+    //     }
+    // }
+    const selectFriend = (item) => {
+        // console.log(item)
+        // let list = [];
+        // list.push(item);
+        // await setTimeout(() => {
+        //     setUserCurrentChat(list)
+        // },[2000])
+        // console.log("from chat SocketID", userCurrentChat)
+        // alert("from chat SocketID" + userCurrentChat.socketID)
+        setUserCurrentChat(item);
+        // console.log(typeof(item))
+
+    }
+
     return (
         <>
             <Row>
@@ -101,16 +117,15 @@ export default function Chat() {
                     <Sidebar onClickMenu={onClickMenu} user={user} show={show} />
                 </Col>
                 <Col span={5}>
-                    <ChatPanel friends={friends} />
+                    <ChatPanel selectFriend={selectFriend} />
                 </Col>
                 <Col span={16}>
                     <Routes>
                         <Route>
-                            <Route path="/" index element={<HistoryChat />} />
+                            <Route path="/" index element={<HistoryChat userCurrentChat={userCurrentChat}/>} />
                             <Route path="addfriend" element={<AddFriend test="duong" users={usersWantMadeFriend} />} />
                         </Route>
                     </Routes>
-                    {/* <HistoryChat /> */}
                 </Col>
             </Row>
         </>

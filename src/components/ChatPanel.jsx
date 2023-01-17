@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { WechatOutlined, MessageOutlined, UserOutlined, PlusOutlined, UsergroupAddOutlined, UserAddOutlined } from '@ant-design/icons';
 import { Form, Input, Button, Tooltip, Space, Avatar, Image, List, Skeleton, Divider, Badge, Modal } from 'antd';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -6,12 +6,15 @@ import socket from "../socket";
 import UserContext from "../contexts/UserContext";
 import { useContext } from "react";
 import { useEffect } from "react";
-
+import Auth from "../service/Auth";
 const { Search } = Input;
 
 export default function ChatPanel(props) {
+    const submitBtnFormInvite = useRef(null);
     const [isModalOpenInviteFriend, setIsModalOpenInviteFriend] = useState(false);
     const { user } = useContext(UserContext);
+    const [friends, setFriends] = useState([]);
+    const [currentFriends, setCurrentFriend] = useState([]);
 
     const showModalInviteFriend = () => {
         setIsModalOpenInviteFriend(true);
@@ -28,18 +31,25 @@ export default function ChatPanel(props) {
     const sendTestUpdateFriend = () => {
         socket.emit('want update friend')
     }
+    const getListFriend = async () => {
+        if (user.uid) {
+            const result = await Auth.getListFriend(user.uid);
+            console.log("result >>>>> ",result)
+            if (result) {
+                setTimeout(() => {
+                    setFriends(result.data);
+                }, 300);
+            }
+        }
+    }
 
     useEffect(() => {
-        console.log("from chatpanel: ",props.friends)
-        // socket.on("updateListFriend", () => {
-        //     console.log("update friend: ",socket.id)
+        getListFriend()
 
-        // });
-
-        // return () => {
-        //     socket.removeAllListeners()
+        // if (user) {
+        //     console.log("from chatpanel: ", friends)
         // }
-    }, [props.friends])
+    }, [user])
 
 
     const container = {
@@ -62,8 +72,9 @@ export default function ChatPanel(props) {
     }
     return (
         <>
-            <Modal title={"Thêm bạn"} onOk={onFinish} onCancel={handleCancel} open={isModalOpenInviteFriend} okText={"Mời"} cancelText={"Huỷ"} >
+            <Modal title={"Thêm bạn"} onOk={() => {submitBtnFormInvite.current.click()}} onCancel={handleCancel} open={isModalOpenInviteFriend} okText={"Mời"} cancelText={"Huỷ"} >
                 <Form
+                    style={{ display: "flex"}}
                     name="basic"
                     labelCol={{
                         span: 8,
@@ -88,7 +99,7 @@ export default function ChatPanel(props) {
                             },
                         ]}
                     >
-                        <Input />
+                        <Input style={{width: "230%"}}/>
                     </Form.Item>
 
                     {/* <Form.Item
@@ -111,8 +122,8 @@ export default function ChatPanel(props) {
                             span: 16,
                         }}
                     >
-                        <Button type="primary" htmlType="submit">
-                            Submit
+                        <Button ref={submitBtnFormInvite} style={{ display: "none" }} type="primary" htmlType="submit">
+                            Mời
                         </Button>
                     </Form.Item>
                 </Form>
@@ -144,17 +155,17 @@ export default function ChatPanel(props) {
                         }}
                     >
                         <InfiniteScroll
-                            dataLength={props.friends.length}
+                            dataLength={friends.length}
                             // next={loadMoreData}
-                            hasMore={props.friends.length < 50}
+                            hasMore={friends.length < 50}
                             endMessage={<Divider plain>It is all, nothing more 🤐</Divider>}
                             scrollableTarget="scrollableDiv"
                         >
                             <List
-                                dataSource={props.friends[0]}
+                                dataSource={friends[0]}
                                 renderItem={(item) => (
-                                    <List.Item key={item.email}  onClick={() => {
-                                        alert(item.email)
+                                    <List.Item key={item.email} onClick={() => {
+                                        props.selectFriend(item)
                                     }}>
                                         <List.Item.Meta
                                             style={{ display: "flex", alignItems: "center", cursor: "pointer" }}
