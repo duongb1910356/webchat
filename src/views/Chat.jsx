@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useState, useEffect, useCallback } from "react";
 import { Col, Row } from 'antd';
 import Sidebar from "../components/Sidebar";
 import ChatPanel from "../components/ChatPanel";
@@ -10,11 +10,12 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Test from "../components/Test";
 import AddFriend from "../components/AddFriend";
 import { useNavigate, Link } from "react-router-dom"; //import module điều hướng
+import { FriendProvider } from "../contexts/FriendContext";
 
 export default function Chat() {
     const { user, setUser } = useContext(UserContext);
     const [userCurrentChat, setUserCurrentChat] = useState({});
-
+    const [messages, setMessages] = useState([]);
     const [show, setShow] = useState(false);
     const [usersWantMadeFriend, setUserWantMakeFriend] = useState([]);
     const [friends, setFriends] = useState([]);
@@ -23,32 +24,50 @@ export default function Chat() {
     //     setShow(true)
     // }
 
+    const callBackRecieveMessage = ({ content, from, date, userSend, userRecieve }) => {
+        const msg = {
+            content,
+            from: from,
+            date: date,
+            userSend: userSend,
+            userRecieve: userRecieve
+        }
+        console.log("msg ", msg)
+        // await userCurrentChat.messages?.push(msg);
+        // setMessages([...messages, msg])
 
+        console.log("from on prite ", userCurrentChat.messages)
+    }
 
     useEffect(() => {
-        Auth.fetchProfile()
-            .then((resolve) => {
-                setTimeout(() => {
-                    setUser(resolve.data);
-                }, 3000);
+        const fetchProfile = () => {
+            Auth.fetchProfile()
+                .then((resolve) => {
+                    setTimeout(() => {
+                        setUser(resolve.data);
+                    }, 3000);
 
-                const sessionID = localStorage.getItem("sessionID");
-                if (sessionID) {
-                    socket.auth = { sessionID };
-                } else {
-                    let uid = user.uid;
-                    let email = user.email;
-                    let username = user.username;
-                    let photoURL = user.photoURL;
-                    // console.log(">>>",username);
-                    socket.auth = { uid, email, username, photoURL };
-                }
-                socket.connect()
+                    const sessionID = localStorage.getItem("sessionID");
+                    if (sessionID) {
+                        socket.auth = { sessionID };
+                    } else {
+                        let uid = user.uid;
+                        let email = user.email;
+                        let username = user.username;
+                        let photoURL = user.photoURL;
+                        // console.log(">>>",username);
+                        socket.auth = { uid, email, username, photoURL };
+                    }
+                    socket.connect()
 
-            })
-            .catch((error) => {
-                console.log(error, "Lỗi fetch")
-            })
+                })
+                .catch((error) => {
+                    console.log(error, "Lỗi fetch")
+                })
+        }
+
+        fetchProfile()
+
 
         socket.on("session", ({ sessionID, id }) => {
             console.log("session >>>", sessionID);
@@ -74,18 +93,54 @@ export default function Chat() {
             setShow(true)
         });
 
+        // socket.on("private message", async ({ content, from, date, userSend, userRecieve }) => {
+        //     const msg = {
+        //         content,
+        //         from: from,
+        //         date: date,
+        //         userSend: userSend,
+        //         userRecieve: userRecieve
+        //     }
+        //     console.log("msg ", msg)
+        //     await userCurrentChat.messages?.push(msg);
+        //     // setMessages([...messages, msg])
+
+        //     console.log("from on prite ", userCurrentChat.messages)
+
+        // })
+
+        socket.on("private message", async ({ content, from, date, userSend, userRecieve }) => {
+            const msg = {
+                content,
+                from: from,
+                date: date,
+                userSend: userSend,
+                userRecieve: userRecieve
+            }
+            console.log(msg)
+            await userCurrentChat.messages?.push(msg);
+            // setMessages([...messages, msg])
+
+            console.log("from on prite ", userCurrentChat.messages)
+
+        })
+
         return () => {
             socket.removeAllListeners()
         }
-    }, [usersWantMadeFriend]);
+    }, [usersWantMadeFriend, userCurrentChat.messages]);
+
+
 
     const onClickMenu = (e) => {
-        if (e.key == "noficiation") {
+        if (e.key === "noficiation") {
             setShow(false)
             navigate("addfriend")
             // console.log(show)
         }
     }
+
+
 
     // const sendMessage = (content) => {
     //     console.log("userCurrentChat.socketID >>> ", userCurrentChat.socketID)
@@ -97,37 +152,77 @@ export default function Chat() {
     //     }
     // }
     const selectFriend = (item) => {
-        // console.log(item)
-        // let list = [];
-        // list.push(item);
-        // await setTimeout(() => {
-        //     setUserCurrentChat(list)
-        // },[2000])
-        // console.log("from chat SocketID", userCurrentChat)
-        // alert("from chat SocketID" + userCurrentChat.socketID)
+        // setMessages(item.messages)
         setUserCurrentChat(item);
-        // console.log(typeof(item))
+    }
 
+    const sendMessage = async (content) => {
+        // const message = props.userCurrentChat.messages.concat(content)
+        // props.userCurrentChat.messages = message;
+        // console.log("userCurrentChat >>> ", props.userCurrentChat.messages.length);
+        if (userCurrentChat.socketID) {
+            socket.emit("private message", {
+                content,
+                to: userCurrentChat.socketID,
+                date: new Date().toLocaleString(),
+                userSend: user,
+                userRecieve: {
+                    uid: userCurrentChat.uid,
+                    photoURL: userCurrentChat.photoURL
+                }
+            });
+            const msg = {
+                content,
+                from: socket.id,
+                date: new Date().toLocaleString(),
+                userSend: user,
+                userRecieve: {
+                    uid: userCurrentChat.uid,
+                    photoURL: userCurrentChat.photoURL
+                }
+            }
+            // setMessages([...messages, msg])
+            await userCurrentChat.messages?.push(msg);
+            console.log("send message ", userCurrentChat.messages)
+            // setMessages([...messages, msg])
+            // props.userCurrentChat.messages.push(msg)
+            // // setMessages([...messages, msg]);
+            // console.log(messages)
+            // console.log(props.userCurrentChat.messages)
+            // const message = props.userCurrentChat.messages.concat(msg)
+            // props.userCurrentChat.messages = message;
+            // console.log(props.userCurrentChat.messages)
+            // props.userCurrentChat.messages.map((e) => {
+            //     console.log(e)
+            // })
+            //     setMessages(old => [
+            //         ...old,
+            //         msg
+            //     ])
+        }
+        // console.log("messages >> ", messages)
     }
 
     return (
         <>
-            <Row>
-                <Col span={3}>
-                    <Sidebar onClickMenu={onClickMenu} user={user} show={show} />
-                </Col>
-                <Col span={5}>
-                    <ChatPanel selectFriend={selectFriend} />
-                </Col>
-                <Col span={16}>
-                    <Routes>
-                        <Route>
-                            <Route path="/" index element={<HistoryChat userCurrentChat={userCurrentChat}/>} />
-                            <Route path="addfriend" element={<AddFriend test="duong" users={usersWantMadeFriend} />} />
-                        </Route>
-                    </Routes>
-                </Col>
-            </Row>
+            <FriendProvider>
+                <Row>
+                    <Col span={3}>
+                        <Sidebar onClickMenu={onClickMenu} user={user} show={show} />
+                    </Col>
+                    <Col span={5}>
+                        <ChatPanel selectFriend={selectFriend} />
+                    </Col>
+                    <Col span={16}>
+                        <Routes>
+                            <Route>
+                                <Route path="/" index element={<HistoryChat messages={messages} sendMessage={sendMessage} userCurrentChat={userCurrentChat} />} />
+                                <Route path="addfriend" element={<AddFriend test="duong" users={usersWantMadeFriend} />} />
+                            </Route>
+                        </Routes>
+                    </Col>
+                </Row>
+            </FriendProvider>
         </>
     )
 }

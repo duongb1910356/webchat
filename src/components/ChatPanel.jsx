@@ -1,19 +1,21 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useContext } from "react";
 import { WechatOutlined, MessageOutlined, UserOutlined, PlusOutlined, UsergroupAddOutlined, UserAddOutlined } from '@ant-design/icons';
 import { Form, Input, Button, Tooltip, Space, Avatar, Image, List, Skeleton, Divider, Badge, Modal } from 'antd';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import socket from "../socket";
 import UserContext from "../contexts/UserContext";
-import { useContext } from "react";
 import { useEffect } from "react";
 import Auth from "../service/Auth";
+import FriendContext from "../contexts/FriendContext";
+
 const { Search } = Input;
 
 export default function ChatPanel(props) {
+    const { friends, setFriends } = useContext(FriendContext);
     const submitBtnFormInvite = useRef(null);
     const [isModalOpenInviteFriend, setIsModalOpenInviteFriend] = useState(false);
     const { user } = useContext(UserContext);
-    const [friends, setFriends] = useState([]);
+    // const [friends, setFriends] = useState([]);
     const [currentFriends, setCurrentFriend] = useState([]);
 
     const showModalInviteFriend = () => {
@@ -34,12 +36,20 @@ export default function ChatPanel(props) {
     const getListFriend = async () => {
         if (user.uid) {
             const result = await Auth.getListFriend(user.uid);
-            console.log("result >>>>> ",result)
+
+            // console.log("result >>>>> ",result)
             if (result) {
+                result.data[0].map(e => {
+                    return (
+                        e.hasNewMessage = false,
+                        e.messages = []
+                    )
+                })
                 setTimeout(() => {
                     setFriends(result.data);
                 }, 300);
             }
+
         }
     }
 
@@ -72,9 +82,9 @@ export default function ChatPanel(props) {
     }
     return (
         <>
-            <Modal title={"Thêm bạn"} onOk={() => {submitBtnFormInvite.current.click()}} onCancel={handleCancel} open={isModalOpenInviteFriend} okText={"Mời"} cancelText={"Huỷ"} >
+            <Modal title={"Thêm bạn"} onOk={() => { submitBtnFormInvite.current.click() }} onCancel={handleCancel} open={isModalOpenInviteFriend} okText={"Mời"} cancelText={"Huỷ"} >
                 <Form
-                    style={{ display: "flex"}}
+                    style={{ display: "flex" }}
                     name="basic"
                     labelCol={{
                         span: 8,
@@ -99,7 +109,7 @@ export default function ChatPanel(props) {
                             },
                         ]}
                     >
-                        <Input style={{width: "230%"}}/>
+                        <Input style={{ width: "230%" }} />
                     </Form.Item>
 
                     {/* <Form.Item

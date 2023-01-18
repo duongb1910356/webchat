@@ -1,10 +1,11 @@
 import React, { useContext, useEffect, useState } from "react";
-import { Breadcrumb, Layout, Menu, theme, Avatar, List, Badge, Button, Card } from 'antd';
+import { Breadcrumb, Layout, Menu, theme, Avatar, List, Badge, Button, Card, message } from 'antd';
 import { PhoneOutlined, VideoCameraOutlined, SendOutlined } from '@ant-design/icons';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { Alert, Space, Input } from 'antd';
 import socket from "../socket";
 import UserContext from "../contexts/UserContext";
+import FriendContext from "../contexts/FriendContext";
 
 const { Header, Content, Footer } = Layout;
 const { Search } = Input;
@@ -12,59 +13,66 @@ const { Search } = Input;
 function HistoryChat(props) {
     const { Meta } = Card;
     const { user, setUser } = useContext(UserContext);
-    const [messages, setMessages] = useState([]);
+    const { friends, setFriends } = useContext(FriendContext);
+    // const [messages, setMessages] = useState([]);
     const [textMessage, setTextMessage] = useState("");
-    const log = () => {
-        console.log("from hostory chat >> ", typeof (props.data));
-    }
 
-    const sendMessage = (content) => {
-        console.log("userCurrentChat.socketID >>> ", props.userCurrentChat.socketID)
-        if (props.userCurrentChat.socketID) {
-            socket.emit("private message", {
-                content,
-                to: props.userCurrentChat.socketID,
-                date: new Date().toLocaleString(),
-                userSend: user,
-                userRecieve: props.userCurrentChat
-            });
-            const msg = {
-                content,
-                from: socket.id,
-                date: new Date().toLocaleString(),
-                userSend: user,
-                userRecieve: props.userCurrentChat
-            }
-            setMessages(old => [
-                ...old,
-                msg
-            ])
-        }
-        console.log("messages >> ", messages)
-    }
+    // const sendMessage = (content) => {
+    //     // const message = props.userCurrentChat.messages.concat(content)
+    //     // props.userCurrentChat.messages = message;
+    //     // console.log("userCurrentChat >>> ", props.userCurrentChat.messages.length);
+    //     // if (props.userCurrentChat.socketID) {
+    //     //     socket.emit("private message", {
+    //     //         content,
+    //     //         to: props.userCurrentChat.socketID,
+    //     //         date: new Date().toLocaleString(),
+    //     //         userSend: user,
+    //     //         userRecieve: props.userCurrentChat
+    //     //     });
+    //     const msg = {
+    //         content,
+    //         from: socket.id,
+    //         date: new Date().toLocaleString(),
+    //         userSend: user,
+    //         userRecieve: props.userCurrentChat
+    //     }
+    //     props.userCurrentChat.messages.push(msg)
+    //     // setMessages([...messages, msg]);
+    //     console.log(messages)
+    //     // console.log(props.userCurrentChat.messages)
+    //     // const message = props.userCurrentChat.messages.concat(msg)
+    //     // props.userCurrentChat.messages = message;
+    //     // console.log(props.userCurrentChat.messages)
+    //     // props.userCurrentChat.messages.map((e) => {
+    //     //     console.log(e)
+    //     // })
+    //     //     setMessages(old => [
+    //     //         ...old,
+    //     //         msg
+    //     //     ])
+    //     // }
+    //     // console.log("messages >> ", messages)
+    // }
 
     useEffect(() => {
-        // setCurrentUser(props.data);
-        console.log(props.userCurrentChat.socketID)
-        setMessages([])
-        socket.on("private message", ({ content, from, date, userSend, userRecieve }) => {
-            const msg = {
-                content,
-                from: from,
-                date: date,
-                userSend: userSend,
-                userRecieve: userRecieve
-            }
-            setMessages(old => [
-                ...old,
-                msg
-            ])
-            console.log(content)
-        })
-        return () => {
-            socket.removeAllListeners()
-        }
-    }, [props.userCurrentChat])
+        // console.log("hee");
+        // socket.on("private message", async ({ content, from, date, userSend, userRecieve }) => {
+        //     const msg = {
+        //         content,
+        //         from: from,
+        //         date: date,
+        //         userSend: userSend,
+        //         userRecieve: userRecieve
+        //     }
+        //     console.log(msg)
+        //     await props.userCurrentChat.messages?.push(msg);
+        //     // setMessages([...messages, msg])
+    
+        //     console.log("from on prite ", props.userCurrentChat.messages)
+    
+        // })
+        
+    }, [])
 
     const chatFromFriend = {
         alignSelf: "flex-start",
@@ -74,7 +82,12 @@ function HistoryChat(props) {
         alignSelf: "flex-end",
         marginBottom: "10px",
     }
+    const list = []
+    const listChat = () => {
+        listChat = []
 
+        return listChat;
+    }
     // const renderMessage = () => {
     //     const listChat = [];
     //     messages.map((me) => {
@@ -179,13 +192,13 @@ function HistoryChat(props) {
                         }}
                     >
                         <InfiniteScroll
-                            dataLength={messages}
-                            hasMore={messages < 50}
+                            dataLength={props.userCurrentChat.messages || 0}
+                            hasMore={props.userCurrentChat.messages < 50}
                             scrollableTarget="scrollableDiv"
                             style={{ display: "flex", flexDirection: "column" }}
                         >
                             {
-                                messages.map((me) => {
+                                props.userCurrentChat.messages?.map((me) => {
                                     return (
                                         <div
                                             key={me.date}
@@ -203,7 +216,9 @@ function HistoryChat(props) {
                                                     type={me.from == socket.id ? "success" : "info"}
                                                 />
                                             </Space>
-                                        </div>)
+                                        </div>
+                                    )
+
                                 })
                             }
                         </InfiniteScroll>
@@ -222,8 +237,8 @@ function HistoryChat(props) {
                         justifyContent: "space-between"
                     }}
                 >
-                    <Input onChange={(e) => setTextMessage(e.target.value)} size="large" placeholder="Nhập tin nhắn..." />
-                    <Button onClick={() => sendMessage(textMessage)} icon={<SendOutlined />}></Button>
+                    <Input onChange={(e) => setTextMessage(e.target.value)} value={textMessage} size="large" placeholder="Nhập tin nhắn..." />
+                    <Button onClick={() => { props.sendMessage(textMessage); setTextMessage(''); }} icon={<SendOutlined />}></Button>
                 </Footer>
             </Layout>
         </>
