@@ -7,6 +7,7 @@ import "./App.css";
 import { UserProvider } from "./contexts/UserContext";
 import Test from "./components/Test";
 import AddFriend from "./components/AddFriend";
+import { FriendProvider } from "./contexts/FriendContext";
 
 class App extends React.Component {
   constructor(props) {
@@ -16,18 +17,21 @@ class App extends React.Component {
   render() {
     return (
       <UserProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/">
-              <Route index element={<Login />} />
-              <Route path='register' element={<Register />} />
-              <Route path="chat/*" element={<Chat />}>
-                <Route path='test' element={<Test />} />
-                <Route path="addfriend" element={<AddFriend />} />
+        <FriendProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/">
+                <Route index element={<Login />} />
+                <Route path='register' element={<Register />} />
+                <Route path="chat/*" element={<Chat />}>
+                  <Route path='test' element={<Test />} />
+                  <Route path="addfriend" element={<AddFriend />} />
+                </Route>
               </Route>
-            </Route>
-          </Routes>
-        </BrowserRouter>
+            </Routes>
+          </BrowserRouter>
+        </FriendProvider>
+
       </ UserProvider>
 
     )

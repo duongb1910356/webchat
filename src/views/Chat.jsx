@@ -10,15 +10,17 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Test from "../components/Test";
 import AddFriend from "../components/AddFriend";
 import { useNavigate, Link } from "react-router-dom"; //import module điều hướng
-import { FriendProvider } from "../contexts/FriendContext";
+import FriendContext from "../contexts/FriendContext";
+import { async } from "@firebase/util";
 
 export default function Chat() {
     const { user, setUser } = useContext(UserContext);
+    const { friends, setFriends } = useContext(FriendContext);
     const [userCurrentChat, setUserCurrentChat] = useState({});
-    const [messages, setMessages] = useState([]);
+    const [messages, setMessages] = useState([{}]);
     const [show, setShow] = useState(false);
     const [usersWantMadeFriend, setUserWantMakeFriend] = useState([]);
-    const [friends, setFriends] = useState([]);
+    // const [friends, setFriends] = useState([]);
     const navigate = useNavigate();
     // const showNofication = () => {
     //     setShow(true)
@@ -109,6 +111,15 @@ export default function Chat() {
 
         // })
 
+
+
+        return () => {
+            socket.removeAllListeners()
+        }
+    }, [usersWantMadeFriend]);
+
+    useEffect(() => {
+        console.log("change chat")
         socket.on("private message", async ({ content, from, date, userSend, userRecieve }) => {
             const msg = {
                 content,
@@ -117,19 +128,20 @@ export default function Chat() {
                 userSend: userSend,
                 userRecieve: userRecieve
             }
-            console.log(msg)
-            await userCurrentChat.messages?.push(msg);
-            // setMessages([...messages, msg])
-
-            console.log("from on prite ", userCurrentChat.messages)
-
+            console.log("friends ", friends);
+            friends[0].map(async (element, index) => {
+                if (element.uid == userSend.uid){
+                    await element.messages?.push(msg);
+                    element.hasNewMessage = true;
+                }
+            })
+            setMessages([...messages, msg])
         })
 
         return () => {
-            socket.removeAllListeners()
+            socket.removeListener("private message")
         }
-    }, [usersWantMadeFriend, userCurrentChat.messages]);
-
+    }, [socket, userCurrentChat, friends])
 
 
     const onClickMenu = (e) => {
@@ -152,8 +164,10 @@ export default function Chat() {
     //     }
     // }
     const selectFriend = (item) => {
-        // setMessages(item.messages)
+        item.hasNewMessage = false;
+        setMessages(item.messages)
         setUserCurrentChat(item);
+        navigate("/chat");
     }
 
     const sendMessage = async (content) => {
@@ -183,46 +197,31 @@ export default function Chat() {
             }
             // setMessages([...messages, msg])
             await userCurrentChat.messages?.push(msg);
-            console.log("send message ", userCurrentChat.messages)
-            // setMessages([...messages, msg])
-            // props.userCurrentChat.messages.push(msg)
-            // // setMessages([...messages, msg]);
-            // console.log(messages)
-            // console.log(props.userCurrentChat.messages)
-            // const message = props.userCurrentChat.messages.concat(msg)
-            // props.userCurrentChat.messages = message;
-            // console.log(props.userCurrentChat.messages)
-            // props.userCurrentChat.messages.map((e) => {
-            //     console.log(e)
-            // })
-            //     setMessages(old => [
-            //         ...old,
-            //         msg
-            //     ])
+            setMessages([...messages, msg])
+            console.log("send message ", messages)
+
         }
         // console.log("messages >> ", messages)
     }
 
     return (
         <>
-            <FriendProvider>
-                <Row>
-                    <Col span={3}>
-                        <Sidebar onClickMenu={onClickMenu} user={user} show={show} />
-                    </Col>
-                    <Col span={5}>
-                        <ChatPanel selectFriend={selectFriend} />
-                    </Col>
-                    <Col span={16}>
-                        <Routes>
-                            <Route>
-                                <Route path="/" index element={<HistoryChat messages={messages} sendMessage={sendMessage} userCurrentChat={userCurrentChat} />} />
-                                <Route path="addfriend" element={<AddFriend test="duong" users={usersWantMadeFriend} />} />
-                            </Route>
-                        </Routes>
-                    </Col>
-                </Row>
-            </FriendProvider>
+            <Row>
+                <Col span={3}>
+                    <Sidebar onClickMenu={onClickMenu} user={user} show={show} />
+                </Col>
+                <Col span={5}>
+                    <ChatPanel selectFriend={selectFriend} />
+                </Col>
+                <Col span={16}>
+                    <Routes>
+                        <Route>
+                            <Route path="/" index element={<HistoryChat messages={userCurrentChat.messages} sendMessage={sendMessage} userCurrentChat={userCurrentChat} />} />
+                            <Route path="addfriend" element={<AddFriend test="duong" users={usersWantMadeFriend} />} />
+                        </Route>
+                    </Routes>
+                </Col>
+            </Row>
         </>
     )
 }

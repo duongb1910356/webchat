@@ -57,7 +57,7 @@ export default function ChatPanel(props) {
         getListFriend()
 
         // if (user) {
-        //     console.log("from chatpanel: ", friends)
+            console.log("from chatpanel friends: ", friends)
         // }
     }, [user])
 
@@ -184,7 +184,7 @@ export default function ChatPanel(props) {
                                             description={item.email}
                                         />
                                         <div>
-                                            <Badge dot={true}></Badge>
+                                            <Badge dot={item.hasNewMessage}></Badge>
                                         </div>
                                     </List.Item>
                                 )}
