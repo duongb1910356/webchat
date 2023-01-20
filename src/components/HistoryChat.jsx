@@ -1,14 +1,16 @@
 import React, { useContext, useEffect, useState, useCallback } from "react";
-import { Breadcrumb, Layout, Menu, theme, Avatar, List, Badge, Button, Card, message } from 'antd';
-import { PhoneOutlined, VideoCameraOutlined, SendOutlined } from '@ant-design/icons';
+import { Breadcrumb, Layout, Menu, theme, Avatar, List, Badge, Button, Card, message, Upload } from 'antd';
+import { PhoneOutlined, VideoCameraOutlined, SendOutlined, UploadOutlined } from '@ant-design/icons';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { Alert, Space, Input } from 'antd';
 import socket from "../socket";
 import UserContext from "../contexts/UserContext";
 import FriendContext from "../contexts/FriendContext";
+import { getStorage, ref, getDownloadURL, uploadBytes } from "firebase/storage";
 
 const { Header, Content, Footer } = Layout;
 const { Search } = Input;
+const storage = getStorage();
 
 function HistoryChat(props) {
     const { Meta } = Card;
@@ -20,7 +22,7 @@ function HistoryChat(props) {
 
     useEffect(() => {
         console.log("change history chat")
-    }, [])
+    }, [props.messages])
 
     const chatFromFriend = {
         alignSelf: "flex-start",
@@ -36,39 +38,45 @@ function HistoryChat(props) {
 
         return listChat;
     }
-    // const renderMessage = () => {
-    //     const listChat = [];
-    //     messages.map((me) => {
-    //         listChat.push(
-    //             <>
-    //                 <div
-    //                     key={me.content}
-    //                     style={me.from != socket.id ? chatFromFriend : chatFromSelf}>
-    //                     <Avatar style={me.from != socket.id ? { float: "left" } : { float: "right" }} src={me.photoURL} /> <br />
-    //                     <Space
-    //                         direction="vertical"
-    //                         style={{
-    //                             maxWidthwidth: '70%',
-    //                         }}
-    //                     >
-    //                         <Alert
-    //                             message={me.content}
-    //                             description="me.date"
-    //                             type={me.from == socket.id ? "success" : "info"}
-    //                         />
-    //                     </Space>
-    //                 </div>
-    //             </>
 
-    //         )
-    //     })
+    const uploadImageOnly = {
+        // name: 'file',
+        // action: 'https://www.mocky.io/v2/5cc8019d300000980a055e76',
+        // headers: {
+        //     authorization: 'authorization-text',
+        // },
+        showUploadList: false,
+        beforeUpload: async (file) => {
+            // const url = "https://firebasestorage.googleapis.com/v0/b/socialmedia-c3d70.appspot.com/o/c0ae3e67-0da3-4d12-b927-b6c471f4f900sladbia.png?alt=media&token=311705c7-2906-435f-9d9a-6b9e24cc6707"
+            // props.sendMessage(url, "img")
 
-    //     return listChat;
-    // }
+            const imgRef = ref(storage, props.userCurrentChat.uid + "slad" + file.name);
+            uploadBytes(imgRef, file)
+                .then(() => {
+                    getDownloadURL(imgRef)
+                        .then((url) => {
+                            console.log("URL ", url);
+                            props.sendMessage(url, "img")
+                        })
+                        .catch((error) => {
+                            console.log("Error get url img send ", error)
+                        })
+                })
+                .catch((er) => {
+                    console.log("Error upload img sending ", er)
+                })
+            console.log("file name ", file.name)
+            return false;
+        },
+        onChange: (info) => {
+            // console.log(info.fileList[0]);
+        },
+
+
+    };
 
     return (
         <>
-
             <Layout style={{ height: "100vh", background: "" }}>
                 <Header
                     style={{
@@ -87,22 +95,6 @@ function HistoryChat(props) {
                 >
 
                     <div style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", width: "100%", alignItems: "center" }}>
-                        {/* <List
-                            dataSource={currentUser}
-                            renderItem={(item) => (
-                                <List.Item key={item.email} >
-                                    <List.Item.Meta
-                                        style={{ display: "flex", alignItems: "center", cursor: "pointer",}}
-                                        avatar={<Avatar src={item.photoURL} />}
-                                        title={<a href="#">{item.username}</a>}
-                                        description={"Online"}
-                                    />
-                                </List.Item>
-                            )}
-
-                            
-                        /> */}
-
                         <Card
                             size="small"
                             style={{ border: "none" }}
@@ -144,57 +136,60 @@ function HistoryChat(props) {
                             hasMore={props.messages < 50}
                             scrollableTarget="scrollableDiv"
                         >
-                            <ul style={{listStyleType: "none", display: "flex", flexDirection: "column"}}>
+                            <ul style={{ listStyleType: "none", display: "flex", flexDirection: "column" }}>
                                 {
                                     props.messages?.map((me) => {
                                         return (
                                             <li
                                                 key={me.date}
-                                                style={me.from != socket.id ? chatFromFriend : chatFromSelf}>
+                                                style={me.from != socket.id ? chatFromFriend : chatFromSelf}
+                                            >
                                                 <Avatar style={me.from != socket.id ? { float: "left" } : { float: "right" }} src={me.userSend.photoURL} /> <br />
                                                 <Space
                                                     direction="vertical"
                                                     style={{
                                                         maxWidthwidth: '70%',
+                                                        paddingTop: "5px"
                                                     }}
                                                 >
-                                                    <Alert
-                                                        message={me.content}
-                                                        description={me.date}
-                                                        type={me.from == socket.id ? "success" : "info"}
-                                                    />
+                                                    {me.type == "img" && <img height={"220px"} src={me.content} alt="" />}
+                                                    {me.type == 'text' &&
+                                                        <Alert
+                                                            message={me.content}
+                                                            description={me.date}
+                                                            type={me.from == socket.id ? "success" : "info"}
+                                                        />
+                                                    }
                                                 </Space>
                                             </li>
                                         )
+                                        // if (me.type == "img") {
 
+                                        // } else {
+                                        //     return (
+                                        //         <li
+                                        //             key={me.date}
+                                        //             style={me.from != socket.id ? chatFromFriend : chatFromSelf}>
+                                        //             <Avatar style={me.from != socket.id ? { float: "left" } : { float: "right" }} src={me.userSend.photoURL} /> <br />
+                                        //             <Space
+                                        //                 direction="vertical"
+                                        //                 style={{
+                                        //                     maxWidthwidth: '70%',
+                                        //                 }}
+                                        //             >
+                                        //                 <Alert
+                                        //                     message={me.content}
+                                        //                     description={me.date}
+                                        //                     type={me.from == socket.id ? "success" : "info"}
+                                        //                 />
+                                        //             </Space>
+                                        //         </li>
+                                        //     )
+                                        // }
                                     })
                                 }
 
                             </ul>
-                            {/* {
-                                props.userCurrentChat.messages?.map((me) => {
-                                    return (
-                                        <div
-                                            key={me.date}
-                                            style={me.from != socket.id ? chatFromFriend : chatFromSelf}>
-                                            <Avatar style={me.from != socket.id ? { float: "left" } : { float: "right" }} src={me.userSend.photoURL} /> <br />
-                                            <Space
-                                                direction="vertical"
-                                                style={{
-                                                    maxWidthwidth: '70%',
-                                                }}
-                                            >
-                                                <Alert
-                                                    message={me.content}
-                                                    description={me.date}
-                                                    type={me.from == socket.id ? "success" : "info"}
-                                                />
-                                            </Space>
-                                        </div>
-                                    )
-
-                                })
-                            } */}
                         </InfiniteScroll>
                     </div>
                 </Content>
@@ -208,11 +203,14 @@ function HistoryChat(props) {
                         backgroundColor: "#fff",
                         display: "flex",
                         alignItems: "center",
-                        justifyContent: "space-between"
+                        justifyContent: "space-around",
                     }}
                 >
-                    <Input onChange={(e) => setTextMessage(e.target.value)} value={textMessage} size="large" placeholder="Nhập tin nhắn..." />
-                    <Button onClick={() => { props.sendMessage(textMessage); setTextMessage(''); }} icon={<SendOutlined />}></Button>
+                    <Upload accept=".png, .jpg" {...uploadImageOnly}>
+                        <Button icon={<UploadOutlined />}>Gửi hình ảnh</Button>
+                    </Upload>
+                    <Input style={{ maxWidth: "80%" }} onChange={(e) => setTextMessage(e.target.value)} value={textMessage} size="large" placeholder="Nhập tin nhắn..." />
+                    <Button onClick={() => { props.sendMessage(textMessage, "text"); setTextMessage(''); }} icon={<SendOutlined />}></Button>
                 </Footer>
             </Layout>
         </>

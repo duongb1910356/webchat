@@ -11,7 +11,7 @@ import Test from "../components/Test";
 import AddFriend from "../components/AddFriend";
 import { useNavigate, Link } from "react-router-dom"; //import module điều hướng
 import FriendContext from "../contexts/FriendContext";
-import { async } from "@firebase/util";
+import { Helmet } from "react-helmet";
 
 export default function Chat() {
     const { user, setUser } = useContext(UserContext);
@@ -120,17 +120,18 @@ export default function Chat() {
 
     useEffect(() => {
         console.log("change chat")
-        socket.on("private message", async ({ content, from, date, userSend, userRecieve }) => {
+        socket.on("private message", async ({ content, from, date, userSend, userRecieve, type }) => {
             const msg = {
                 content,
                 from: from,
                 date: date,
                 userSend: userSend,
-                userRecieve: userRecieve
+                userRecieve: userRecieve,
+                type: type,
             }
-            console.log("friends ", friends);
+            console.log("msg ", msg);
             friends[0].map(async (element, index) => {
-                if (element.uid == userSend.uid){
+                if (element.uid == userSend.uid) {
                     await element.messages?.push(msg);
                     element.hasNewMessage = true;
                 }
@@ -152,17 +153,6 @@ export default function Chat() {
         }
     }
 
-
-
-    // const sendMessage = (content) => {
-    //     console.log("userCurrentChat.socketID >>> ", userCurrentChat.socketID)
-    //     if (userCurrentChat.socketID) {
-    //         socket.emit("private message", {
-    //             content,
-    //             to: userCurrentChat.socketID,
-    //         });
-    //     }
-    // }
     const selectFriend = (item) => {
         item.hasNewMessage = false;
         setMessages(item.messages)
@@ -170,10 +160,7 @@ export default function Chat() {
         navigate("/chat");
     }
 
-    const sendMessage = async (content) => {
-        // const message = props.userCurrentChat.messages.concat(content)
-        // props.userCurrentChat.messages = message;
-        // console.log("userCurrentChat >>> ", props.userCurrentChat.messages.length);
+    const sendMessage = async (content, type) => {
         if (userCurrentChat.socketID) {
             socket.emit("private message", {
                 content,
@@ -183,7 +170,8 @@ export default function Chat() {
                 userRecieve: {
                     uid: userCurrentChat.uid,
                     photoURL: userCurrentChat.photoURL
-                }
+                },
+                type: type,
             });
             const msg = {
                 content,
@@ -193,7 +181,8 @@ export default function Chat() {
                 userRecieve: {
                     uid: userCurrentChat.uid,
                     photoURL: userCurrentChat.photoURL
-                }
+                },
+                type: type,
             }
             // setMessages([...messages, msg])
             await userCurrentChat.messages?.push(msg);
@@ -201,7 +190,6 @@ export default function Chat() {
             console.log("send message ", messages)
 
         }
-        // console.log("messages >> ", messages)
     }
 
     return (
@@ -225,121 +213,3 @@ export default function Chat() {
         </>
     )
 }
-
-// class Chat extends React.Component {
-//     constructor(props) {
-//         super(props)
-//         this.state = {
-//             test: "abc",
-//             data: [
-//                 {
-//                     email: "abc@gmail",
-//                     image: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-//                     title: "abcsdf",
-//                     hasNewMessage: false
-//                 },
-//                 {
-//                     email: "abcfdhhf@gmail",
-//                     image: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-//                     title: "abcsddfhfhdfhhff",
-//                     hasNewMessage: false
-//                 },
-//                 {
-//                     email: "abcfgdhhf@gmail",
-//                     image: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-//                     title: "abcsddfhfhdfhhff",
-//                     hasNewMessage: false
-//                 },
-//                 {
-//                     email: "abcasddfdhhf@gmail",
-//                     image: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-//                     title: "abcsddfhfhdfhhff",
-//                     hasNewMessage: false
-//                 },
-//                 {
-//                     email: "ab4356cfdhhf@gmail",
-//                     image: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-//                     title: "abcsddfhfhdfhhff",
-//                     hasNewMessage: false
-//                 },
-//                 {
-//                     email: "ab4356c346346fdhhf@gmail",
-//                     image: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-//                     title: "abcsddfhfhdfhhff",
-//                     hasNewMessage: false
-//                 },
-//                 {
-//                     email: "ab4dfg4535356cfdhhf@gmail",
-//                     image: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-//                     title: "abcsddfhfhdfhhff",
-//                     hasNewMessage: false
-//                 },
-//                 {
-//                     email: "ab435gdgd6cfdhhf@gmail",
-//                     image: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-//                     title: "abcsddfhfhdfhhff",
-//                     hasNewMessage: false
-//                 }
-//             ],
-//             user: {}
-//         }
-//         // this.changeData = this.changeData.bind(this);
-//     }
-
-//     componentDidMount() {
-//         const obj = JSON.parse(sessionStorage.user);
-//         this.setState({ user: obj.data })
-//     }
-
-//     componentDidUpdate() {
-//         // const obj = JSON.parse(sessionStorage.user);
-//         // this.setState({ user: obj.data })
-//     }
-
-//     // connectSocket(){
-//     //     alert("yes")
-//     //     // socket.connect()
-//     // }
-
-//     // changeData() {
-//     //     this.setState(
-//     //         {
-//     //             data: this.state.data.map(el => {
-//     //                 el.hasNewMessage = (el.email == "abcfdhhf@gmail")
-//     //                 return el;
-//     //             })
-//     //         }
-//     //     )
-//     //     // console.log(this.state.data)
-//     // }
-
-//     render() {
-//         const data2 = [
-//             {
-//                 email: "abcfsetttttttttdhhf@gmail",
-//                 image: "https://zos.alipayobjects.com/rmsportal/jkjgkEfvpUPVyRjUImniVslZfWPnJuuZ.png",
-//                 title: "duong",
-//                 hasNewMessage: true
-//             }
-//         ]
-//         console.log("caht")
-//         return (
-//             <>
-//                 <Row>
-//                     {/* <button onClick={() => { socket.emit("chat message", "dsgg") }}></button> */}
-//                     <Col span={2}>
-//                         <Sidebar user={this.state.user} friendCount={1} />
-//                     </Col>
-//                     <Col span={5}>
-//                         <ChatPanel data={this.state.data} />
-//                     </Col>
-//                     <Col span={17}>
-//                         <HistoryChat />
-//                     </Col>
-//                 </Row>
-//             </>
-//         )
-//     }
-// }
-
-// export default Chat

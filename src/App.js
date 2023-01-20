@@ -16,23 +16,26 @@ class App extends React.Component {
 
   render() {
     return (
-      <UserProvider>
-        <FriendProvider>
-          <BrowserRouter>
-            <Routes>
-              <Route path="/">
-                <Route index element={<Login />} />
-                <Route path='register' element={<Register />} />
-                <Route path="chat/*" element={<Chat />}>
-                  <Route path='test' element={<Test />} />
-                  <Route path="addfriend" element={<AddFriend />} />
+      <>
+        <UserProvider>
+          <FriendProvider>
+            <BrowserRouter>
+              <Routes>
+                <Route path="/">
+                  <Route index element={<Login />} />
+                  <Route path='register' element={<Register />} />
+                  <Route path="chat/*" element={<Chat />}>
+                    <Route path='test' element={<Test />} />
+                    <Route path="addfriend" element={<AddFriend />} />
+                  </Route>
                 </Route>
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </FriendProvider>
+              </Routes>
+            </BrowserRouter>
+          </FriendProvider>
 
-      </ UserProvider>
+        </ UserProvider>
+      </>
+
 
     )
   }

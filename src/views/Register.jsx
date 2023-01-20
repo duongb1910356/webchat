@@ -42,7 +42,7 @@ class Register extends React.Component {
                                     username: values.username,
                                     email: values.email,
                                     pass: values.password,
-                                    photoURL: url
+                                    photoURL: url,
                                 }
                                 console.log(user)
 
