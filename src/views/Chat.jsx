@@ -12,6 +12,7 @@ import AddFriend from "../components/AddFriend";
 import { useNavigate, Link } from "react-router-dom"; //import module điều hướng
 import FriendContext from "../contexts/FriendContext";
 import { Helmet } from "react-helmet";
+import Message from "../service/Message";
 
 export default function Chat() {
     const { user, setUser } = useContext(UserContext);
@@ -144,6 +145,18 @@ export default function Chat() {
         }
     }, [socket, userCurrentChat, friends])
 
+    useEffect(() => {
+        friends[0]?.map(async (element) => {
+            const result = element.uid.localeCompare(user.uid);
+            const id = (result == 1 ? element.uid + user.uid : user.uid + element.uid);
+            const listMess = await (await Message.getMessage(id)).data.messages;
+            if (listMess) {
+                element.messages = listMess;
+                console.log("friends.messages ", element.messages)
+                console.log("User ", id, " : ", listMess)
+            }
+        })
+    }, [friends])
 
     const onClickMenu = (e) => {
         if (e.key === "noficiation") {
