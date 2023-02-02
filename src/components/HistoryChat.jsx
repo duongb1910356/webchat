@@ -1,28 +1,26 @@
-import React, { useContext, useEffect, useState, useCallback } from "react";
-import { Breadcrumb, Layout, Menu, theme, Avatar, List, Badge, Button, Card, message, Upload } from 'antd';
-import { PhoneOutlined, VideoCameraOutlined, SendOutlined, UploadOutlined } from '@ant-design/icons';
+import React, { useContext, useEffect, useState, useRef } from "react";
+import { Breadcrumb, Layout, Menu, theme, Avatar, List, Badge, Button, Card, message, Upload, Spin, Col, Row, Modal } from 'antd';
+import { PhoneOutlined, VideoCameraOutlined, SendOutlined, UploadOutlined, UserOutlined } from '@ant-design/icons';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { Alert, Space, Input } from 'antd';
 import socket from "../socket";
 import UserContext from "../contexts/UserContext";
 import FriendContext from "../contexts/FriendContext";
 import { getStorage, ref, getDownloadURL, uploadBytes } from "firebase/storage";
-
+// import { openStream, playStream, stopStream } from "../service/Stream";
+// import { Peer } from "peerjs";
 const { Header, Content, Footer } = Layout;
 const { Search } = Input;
 const storage = getStorage();
 
 function HistoryChat(props) {
+    const bottomRef = useRef(null);
     const { Meta } = Card;
-    const { user, setUser } = useContext(UserContext);
-    const { friends, setFriends } = useContext(FriendContext);
-    const [messages, setMessages] = useState([]);
     const [textMessage, setTextMessage] = useState("");
-
-
+    
     useEffect(() => {
-        console.log("change history chat")
-    }, [props.messages])
+        bottomRef.current?.scrollIntoView({behavior: 'smooth'});
+    })
 
     const chatFromFriend = {
         alignSelf: "flex-start",
@@ -78,6 +76,22 @@ function HistoryChat(props) {
     return (
         <>
             <Layout style={{ height: "100vh", background: "" }}>
+                {/* <Modal width={750} title="Video Call" open={isModalOpen} onCancel={handleCancel} okButtonProps={{ style: { display: 'none' } }} cancelText={"Huỷ"}>
+                    <Row justify="space-between">
+                        <Col span={11}>
+                            <div style={{ display: "flex", justifyContent: "center", height: "100%", alignItems: "center" }}>
+                                <Spin tip="Đang gọi...">
+                                    <Avatar size={100} icon={<UserOutlined />} />
+                                </Spin>
+                            </div>
+
+                        </Col>
+                        <Col span={11}>
+                            <video id="videoCaller" controls={false} width={"100%"} height={300}>
+                            </video>
+                        </Col>
+                    </Row>
+                </Modal> */}
                 <Header
                     style={{
                         position: 'sticky',
@@ -108,8 +122,8 @@ function HistoryChat(props) {
                         </Card>
 
                         <div >
-                            <Button style={{ marginRight: "15px" }} icon={<PhoneOutlined />}></Button>
-                            <Button icon={<VideoCameraOutlined />}></Button>
+                            <Button onClick={props.callVoice} style={{ marginRight: "15px" }} icon={<PhoneOutlined />}></Button>
+                            <Button onClick={props.callVideo} icon={<VideoCameraOutlined />}></Button>
                         </div>
 
                     </div>
@@ -117,15 +131,17 @@ function HistoryChat(props) {
                 <Content
                     className="site-layout"
                     style={{
-                        padding: '0 30px',
+                        padding: '0px 0px',
+                        marginBottom: 0,
                         borderLeft: "thin solid #d9d9d9",
                         backgroundColor: "#fff",
-                        overflow: "hidden"
+                        overflow: "hidden",
+                        maxHeight: "80%"
                     }}
                 >
                     <div id="scrollableDiv"
                         style={{
-                            marginTop: "20px",
+                            // marginTop: "15px",
                             height: "95%",
                             overflow: 'auto',
                             paddingRight: "15px"
@@ -135,8 +151,9 @@ function HistoryChat(props) {
                             dataLength={props.messages || 0}
                             hasMore={props.messages < 50}
                             scrollableTarget="scrollableDiv"
+                            
                         >
-                            <ul style={{ listStyleType: "none", display: "flex", flexDirection: "column" }}>
+                            <ul style={{ listStyleType: "none", display: "flex", flexDirection: "column", paddingBottom: 0 }}>
                                 {
                                     props.messages?.map((me) => {
                                         return (
@@ -163,33 +180,11 @@ function HistoryChat(props) {
                                                 </Space>
                                             </li>
                                         )
-                                        // if (me.type == "img") {
-
-                                        // } else {
-                                        //     return (
-                                        //         <li
-                                        //             key={me.date}
-                                        //             style={me.from != socket.id ? chatFromFriend : chatFromSelf}>
-                                        //             <Avatar style={me.from != socket.id ? { float: "left" } : { float: "right" }} src={me.userSend.photoURL} /> <br />
-                                        //             <Space
-                                        //                 direction="vertical"
-                                        //                 style={{
-                                        //                     maxWidthwidth: '70%',
-                                        //                 }}
-                                        //             >
-                                        //                 <Alert
-                                        //                     message={me.content}
-                                        //                     description={me.date}
-                                        //                     type={me.from == socket.id ? "success" : "info"}
-                                        //                 />
-                                        //             </Space>
-                                        //         </li>
-                                        //     )
-                                        // }
                                     })
                                 }
 
                             </ul>
+                            <div ref={bottomRef} />
                         </InfiniteScroll>
                     </div>
                 </Content>
@@ -198,7 +193,7 @@ function HistoryChat(props) {
                         textAlign: 'center',
                         borderLeft: "thin solid #d9d9d9",
                         borderTop: "thin solid #d9d9d9",
-                        height: "15%",
+                        height: "75px",
                         padding: '0 50px',
                         backgroundColor: "#fff",
                         display: "flex",

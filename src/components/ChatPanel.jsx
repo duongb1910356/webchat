@@ -7,6 +7,7 @@ import UserContext from "../contexts/UserContext";
 import { useEffect } from "react";
 import Auth from "../service/Auth";
 import FriendContext from "../contexts/FriendContext";
+import phoneGif from "../asset/iconphonerang.gif";
 
 const { Search } = Input;
 
@@ -37,11 +38,12 @@ export default function ChatPanel(props) {
         if (user.uid) {
             const result = await Auth.getListFriend(user.uid);
 
-            // console.log("result >>>>> ",result)
+            console.log("result >>>>> ",result)
             if (result) {
                 result.data[0].map(e => {
                     return (
                         e.hasNewMessage = false,
+                        e.hasNewVideoCall = false,
                         e.messages = []
                     )
                 })
@@ -54,11 +56,7 @@ export default function ChatPanel(props) {
     }
 
     useEffect(() => {
-        getListFriend()
-
-        // if (user) {
-            console.log("from chatpanel friends: ", friends)
-        // }
+        getListFriend();
     }, [user])
 
 
@@ -111,20 +109,6 @@ export default function ChatPanel(props) {
                     >
                         <Input style={{ width: "230%" }} />
                     </Form.Item>
-
-                    {/* <Form.Item
-                        label="Lời nhắn"
-                        name="inviteMessage"
-                        rules={[
-                            {
-                                required: true,
-                                message: 'Nhập lời nhắn',
-                            },
-                        ]}
-                    >
-                        <Input />
-                    </Form.Item> */}
-
 
                     <Form.Item
                         wrapperCol={{
@@ -184,7 +168,10 @@ export default function ChatPanel(props) {
                                             description={item.email}
                                         />
                                         <div>
-                                            <Badge dot={item.hasNewMessage}></Badge>
+                                            <Badge dot={item.hasNewMessage}>
+                                                {item.hasNewVideoCall && <img height={50} src={phoneGif} alt="" />}
+                                            </Badge>
+
                                         </div>
                                     </List.Item>
                                 )}
@@ -196,57 +183,3 @@ export default function ChatPanel(props) {
         </>
     )
 }
-// class ChatPanel extends React.Component {
-//     constructor(props) {
-//         super(props)
-//         this.state = {
-//             friendCount: 0,
-//             isModalOpenInviteFriend: false
-//         }
-//         this.showModalInviteFriend = this.showModalInviteFriend.bind(this)
-//         this.handleCancel = this.handleCancel.bind(this)
-//     }
-
-//     showModalInviteFriend() {
-//         this.setState({ isModalOpenInviteFriend: true });
-//     }
-
-//     handleCancel() {
-//         this.setState({ isModalOpenInviteFriend: false })
-//     }
-
-//     render() {
-//         const container = {
-//             background: {
-//                 height: "100vh",
-//                 padding: "10px 20px",
-//                 boxSizing: "border-box",
-//                 mozBoxSizing: "border-box",
-//                 webkitBoxSizing: "border-box",
-//                 display: "flex",
-//                 flexDirection: "column"
-//             },
-
-//             headerChatPanel: {
-//                 display: "flex",
-//                 flexDirection: "row",
-//                 alignItems: "center",
-//                 justifyContent: "space-between"
-//             }
-//         }
-
-//         const onFinish = (values) => {
-//             socket.emit('invite', values)
-//         };
-//         const onFinishFailed = (errorInfo) => {
-//             console.log('Failed:', errorInfo);
-//         };
-
-//         return (
-//             <>
-//             </>
-//         )
-//     }
-// }
-
-// export default ChatPanel;
