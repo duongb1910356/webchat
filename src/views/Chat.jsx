@@ -45,13 +45,6 @@ export default function Chat() {
     const [closeConnect, setCloseConnect] = useState(false);
     // const [configCall, setConfigCall] = useState();
 
-    const timeoutWaiting = () => {
-        messageApi.open({
-            type: 'error',
-            content: 'Người nhận không phản hồi',
-        });
-    };
-
     const createElementVideo = (stream, userCall = user) => {
         const video = document.createElement("video");
         if (config.video == false) {
@@ -106,7 +99,7 @@ export default function Chat() {
 
     useEffect(() => {
         peer.on("call", call => {
-            console.log("User <<>> ", user);
+            console.log("User <<>> ", user.username);
             if (call.metadata.userCall.username != undefined) {
                 setIsModalVideoCallOpen(true);
                 setCallMediaConection(call);
@@ -168,6 +161,7 @@ export default function Chat() {
     const destroyVideoCall = () => {
         console.log("callMediaConection ", callMediaConection);
         setIsModalVideoCallOpen(false);
+        console.log("setIsModalVideoCallOpen(false);")
         setUserWait(null);
         arrStreams.map(stream => {
             console.log("map stream ", stream)
@@ -225,7 +219,6 @@ export default function Chat() {
 
         fetchProfile()
 
-
         socket.on("session", ({ sessionID, id }) => {
             console.log("session >>>", sessionID);
             socket.auth = { sessionID };
@@ -277,7 +270,7 @@ export default function Chat() {
             switch (type) {
                 case "img":
                 case "text":
-                    friends[0].map(async (element, index) => {
+                    friends.map(async (element, index) => {
                         if (element.uid == userSend.uid) {
                             await element.messages?.push(msg);
                             element.hasNewMessage = true;
@@ -315,17 +308,21 @@ export default function Chat() {
         return () => {
             socket.removeListener(["private message"])
         }
-    }, [socket, userCurrentChat, friends])
+    }, [friends])
 
     useEffect(() => {
-        friends[0]?.map(async (element) => {
-            const result = element.uid.localeCompare(user.uid);
-            const id = (result == 1 ? element.uid + user.uid : user.uid + element.uid);
+        friends.map(async (element, index) => {
+            const isGroup = element.uid == undefined ? true : false;
+            let id = ""
+            if (!isGroup) {
+                const result = element.uid.localeCompare(user.uid);
+                id = (result == 1 ? element.uid + user.uid : user.uid + element.uid);
+            } else {
+                id = element.id;
+            }
             const listMess = await (await Message.getMessage(id)).data.messages;
             if (listMess) {
                 element.messages = listMess;
-                // console.log("friends.messages ", element.messages)
-                // console.log("User ", id, " : ", listMess)
             }
         })
     }, [friends])

@@ -46,6 +46,17 @@ class Auth {
             params: { uid: uid }
         }))
     }
+
+    createGroup(data){
+        // console.log("data service ", data)
+        return (this.api.post("/group", data))
+    }
+
+    getListGroup(uid){
+        return (this.api.get("/listgroup",{
+            params: { uid: uid }
+        }))
+    }
 }
 
 export default new Auth();

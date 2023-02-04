@@ -19,7 +19,7 @@ function HistoryChat(props) {
     const [textMessage, setTextMessage] = useState("");
     
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({behavior: 'smooth'});
+        bottomRef.current?.scrollIntoView({behavior: 'auto'});
     })
 
     const chatFromFriend = {

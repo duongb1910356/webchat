@@ -38,7 +38,7 @@ export default function Sidebar(props){
     // };
 
     const items = [
-                    getItem('Thông báo', 'noficiation',
+                    getItem('New Friend', 'noficiation',
                         <Badge dot={props.show}>
                             <BellOutlined />
                         </Badge>),
