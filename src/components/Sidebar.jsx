@@ -11,11 +11,6 @@ export default function Sidebar(props){
     // const [show, setShow] = useState(false);
 
     useEffect(() => {
-        // socket.on("require add friend", ({content, from}) => {
-        //     console.log("data add friend: >>", content);
-        //     // setShow(true);
-        // })
-
         return () => {
             socket.removeAllListeners()
         }

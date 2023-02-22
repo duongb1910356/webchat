@@ -23,7 +23,7 @@ export default function ChatPanel(props) {
     const [currentFriends, setCurrentFriend] = useState([]);
     const [isModalOpenGroupFriend, setIsModalOpenGroupFriend] = useState(false);
     const [checked, setChecked] = useState([]);
-    const [photoURL, setPhotoURL] = useState('http://abc.xyz');
+    const [photoURL, setPhotoURL] = useState("");
     const [loadingBtn, setLoadingBtn] = useState(false);
     const showModalInviteFriend = () => {
         setIsModalOpenInviteFriend(true);
@@ -44,7 +44,6 @@ export default function ChatPanel(props) {
     const getListFriend = async () => {
         if (user.uid) {
             const listfriend = await (await Auth.getListFriend(user.uid)).data[0];
-            setFriendAddGroup(listfriend);
             const listgroup = await (await Auth.getListGroup(user.uid)).data.depend;
             const result = [...listfriend, ...listgroup]
             // console.log("list f >>>>> ", listfriend);
@@ -61,17 +60,41 @@ export default function ChatPanel(props) {
                 setTimeout(() => {
                     setFriends(result);
                 }, 300);
-            }
+            };
+            // setFriendAddGroup(friends);
+
             console.log("list r >>>>> ", result);
-
-
         }
     };
-    
+
+    useEffect(() => {
+        // console.log("update new group >>", friends)
+        socket.on("update new group", ({ group, idSender }) => {
+            if(idSender == user.uid){
+                return;
+            }
+            console.log("group >>", group);
+            const idgroup = group.id;
+            console.log("FRIENDS >>>>>> ", friends);
+            group.hasNewMessage = false;
+            group.hasNewVideoCall = false;
+            group.messages = [];
+            socket.emit("joinroom", {
+                idgroup
+            });
+            setFriends([...friends, group]);
+        });
+        return () => {
+            socket.removeListener(["update new group"]);
+        }
+    }, [friends])
 
     useEffect(() => {
         getListFriend();
-    }, [user])
+    }, [user]);
+
+    // useEffect(() => {
+    // }, [])
 
 
     const container = {
@@ -104,6 +127,15 @@ export default function ChatPanel(props) {
 
         Auth.createGroup(data)
             .then((resolve) => {
+                const group = resolve.data;
+                group.hasNewMessage = false;
+                group.messages = [];
+                group.hasNewVideoCall = false;
+                setFriends([...friends, group]);
+                socket.emit("update new group", {
+                    group,
+                    checked: checked
+                })
                 setLoadingBtn(false);
                 alert("Nhóm đã tạo thành công");
                 setIsModalOpenGroupFriend(false);
@@ -148,7 +180,7 @@ export default function ChatPanel(props) {
 
     return (
         <>
-            <Modal title={"Thêm bạn"} onOk={() => { submitBtnFormInvite.current.click() }} onCancel={handleCancel} open={isModalOpenInviteFriend} okText={"Mời"} cancelText={"Huỷ"} >
+            <Modal title={"Thêm bạn"} onOk={() => { alert("Đã gửi lời mời"); submitBtnFormInvite.current.click(); setIsModalOpenInviteFriend(false); }} onCancel={handleCancel} open={isModalOpenInviteFriend} okText={"Mời"} cancelText={"Huỷ"} >
                 <Form
                     style={{ display: "flex" }}
                     name="basic"
@@ -216,7 +248,7 @@ export default function ChatPanel(props) {
                 >
                     <List
                         itemLayout="vertical"
-                        dataSource={friendAddGroup}
+                        dataSource={friends}
                         renderItem={(item) => (
                             <List.Item key={item.email ?? item.id}
                                 style={{ display: "flex", alignItems: "center", cursor: "pointer" }}

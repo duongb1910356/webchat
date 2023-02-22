@@ -1,14 +1,16 @@
-import React from 'react';
+import React, {useContext} from 'react';
 import { EditOutlined, EllipsisOutlined, SettingOutlined, DeleteOutlined, CheckOutlined } from '@ant-design/icons';
 import { Avatar, Card } from 'antd';
 import { useEffect } from 'react';
 import { useState } from 'react';
 import socket from '../socket';
+import UserContext from "../contexts/UserContext";
+
 const { Meta } = Card;
 
 export default function AddFriend(props) {
     const [listCard, setListCard] = useState([]);
-
+    const { user, setUser } = useContext(UserContext);
     const container = {
         height: "100vh",
         boxSizing: "border-box",
@@ -27,28 +29,28 @@ export default function AddFriend(props) {
         }
     ]
 
-    const agreeMakeFriend = (uid, id) => {
+    const agreeMakeFriend = (wanter) => {
         // alert(id);
         socket.emit("agreeMakeFriend", {
-            toUid: uid,
-            toIdSocket: id
+            wanter,
+            self: user,
         })
     }
 
     useEffect(() => {
-        console.log(">>>>>>>>>: ", props.users);
-        if (props.users) {
+        // if (props.users) {
             console.log("props.users");
-
+            setListCard([]);
             props.users.map((el) => {
                 const temp =
                     <Card
+                        key={el.uid}
                         style={{
                             width: 300,
                         }}
                         actions={[
                             <DeleteOutlined key="delete" onClick={() => { alert("ell") }} />,
-                            <CheckOutlined key="accept" onClick={() => agreeMakeFriend(el.uid, el.id)}/>,
+                            <CheckOutlined key="accept" onClick={() => agreeMakeFriend(el)}/>,
                         ]}
                     >
                         <Meta
@@ -59,25 +61,8 @@ export default function AddFriend(props) {
                     </Card>
 
                 setListCard(preveState => [...listCard, temp])
-                // listCard.push(
-                //     <Card
-                //         style={{
-                //             width: 300,
-                //         }}
-                //         actions={[
-                //             <DeleteOutlined key="delete" onClick={() => { alert("ell") }} />,
-                //             <CheckOutlined key="accept" />,
-                //         ]}
-                //     >
-                //         <Meta
-                //             avatar={<Avatar src={el.photoURL} />}
-                //             title={el.username}
-                //             description={el.messege}
-                //         />
-                //     </Card>
-                // )
             })
-        }
+        // }
 
     }, [props.users])
 
@@ -92,24 +77,7 @@ export default function AddFriend(props) {
                     flexWrap: "wrap",
                     width: "100%"
                 }}>
-                    <p>{props.test}</p>
-
                     {listCard}
-                    {/* <Card
-                        style={{
-                            width: 300,
-                        }}
-                        actions={[
-                            <DeleteOutlined key="delete" onClick={() => {alert("ell")}} />,
-                            <CheckOutlined key="accept" />,
-                        ]}
-                    >
-                        <Meta
-                            avatar={<Avatar src="https://gw.alipayobjects.com/zos/rmsportal/JiqGstEfoWAOHiTxclqi.png" />}
-                            title="Trần Quốc Dương"
-                            description="Muốn kết bạn với bạn"
-                        />
-                    </Card> */}
 
                 </div>
 

@@ -17,9 +17,10 @@ function HistoryChat(props) {
     const bottomRef = useRef(null);
     const { Meta } = Card;
     const [textMessage, setTextMessage] = useState("");
-    
+    const [uploading, setUploadding] = useState(false);
+
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({behavior: 'auto'});
+        bottomRef.current?.scrollIntoView({ behavior: 'auto' });
     })
 
     const chatFromFriend = {
@@ -49,12 +50,14 @@ function HistoryChat(props) {
             // props.sendMessage(url, "img")
 
             const imgRef = ref(storage, props.userCurrentChat.uid + "slad" + file.name);
+            setUploadding(true);
             uploadBytes(imgRef, file)
                 .then(() => {
                     getDownloadURL(imgRef)
                         .then((url) => {
                             console.log("URL ", url);
-                            props.sendMessage(url, "img")
+                            props.sendMessage(url, "img");
+                            setUploadding(false);
                         })
                         .catch((error) => {
                             console.log("Error get url img send ", error)
@@ -151,7 +154,7 @@ function HistoryChat(props) {
                             dataLength={props.messages || 0}
                             hasMore={props.messages < 50}
                             scrollableTarget="scrollableDiv"
-                            
+
                         >
                             <ul style={{ listStyleType: "none", display: "flex", flexDirection: "column", paddingBottom: 0 }}>
                                 {
@@ -202,7 +205,7 @@ function HistoryChat(props) {
                     }}
                 >
                     <Upload accept=".png, .jpg" {...uploadImageOnly}>
-                        <Button icon={<UploadOutlined />}>Gửi hình ảnh</Button>
+                        <Spin spinning={uploading}><Button icon={<UploadOutlined />}>Gửi hình ảnh</Button></Spin>
                     </Upload>
                     <Input style={{ maxWidth: "80%" }} onChange={(e) => setTextMessage(e.target.value)} value={textMessage} size="large" placeholder="Nhập tin nhắn..." />
                     <Button onClick={() => { props.sendMessage(textMessage, "text"); setTextMessage(''); }} icon={<SendOutlined />}></Button>
